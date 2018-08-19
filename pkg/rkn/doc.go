@@ -9,15 +9,6 @@ import (
 	"github.com/golang/snappy"
 )
 
-// Doc returns a newly created document
-func Doc(key, contents string) *Document {
-	return &Document{
-		Key:       key,
-		Contents:  contents,
-		TimeStamp: time.Now(),
-	}
-}
-
 // Document ...
 type Document struct {
 	TimeStamp time.Time `json:"timestamp"`
@@ -29,17 +20,19 @@ type Document struct {
 // Touch ...
 func (d *Document) Touch() time.Time {
 	d.Lock()
-	defer d.Unlock()
-
 	d.TimeStamp = time.Now()
+	d.Unlock()
+
 	return d.TimeStamp
 }
 
 // toString()
-func (d *Document) toString() (string, string, string) {
+func (d *Document) toString() (key string, timestamp string, compressed string) {
 	d.Lock()
-	defer d.Unlock()
+	key = strings.Replace(d.Key, "|", "-", -1)
+	timestamp = strconv.FormatInt(d.TimeStamp.Unix(), 10)
+	compressed = string(snappy.Encode(nil, []byte(d.Contents)))
+	d.Unlock()
 
-	compressed := snappy.Encode(nil, []byte(d.Contents))
-	return strings.Replace(d.Key, "|", "-", -1), strconv.FormatInt(d.TimeStamp.Unix(), 10), string(compressed)
+	return key, timestamp, compressed
 }

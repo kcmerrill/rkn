@@ -1,26 +1,20 @@
 package main
 
 import (
-	"fmt"
-	"os"
 	"time"
+
+	"github.com/kcmerrill/rkn/pkg/rkn"
 )
 
 func main() {
+	db, _ := rkn.Open("/tmp/something.txt", &rkn.DB{})
+	defer db.Close()
+
+	doc := db.Doc("key", "bingo was his nameo was was was")
 	go func() {
-		f, _ := os.OpenFile("/tmp/dat.txt", os.O_CREATE|os.O_RDONLY, 0644)
 		for {
-			b := make([]byte, 1)
-			f.ReadAt(b, int64(1))
-			fmt.Println(string(b))
+			db.Save(doc)
 		}
 	}()
-	go func() {
-		f, _ := os.OpenFile("/tmp/dat.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		for {
-			f.WriteString("Here is a string, here is another string\n")
-		}
-	}()
-	<-time.After(10 * time.Second)
-	fmt.Println("Finished!")
+	<-time.After(time.Second)
 }
